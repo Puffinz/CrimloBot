@@ -6,14 +6,10 @@ from dotenv import load_dotenv
 from sheets import getVipData
 
 load_dotenv()
-TOKEN = os.getenv('BOT_TOKEN')
 
-bot = commands.Bot(command_prefix='!')
+bot = commands.Bot(command_prefix=os.getenv('BOT_PREFIX'))
 
-@bot.command(name='vip', help='Return your vip information')
-async def vip(ctx, firstName: str, lastName: str):
-  data = getVipData(firstName + ' ' + lastName)
-
+async def sendVipInfo(ctx, name, data):
   if data:
     embed = discord.Embed(title='Crimson Lotus Vip Status', color=0x7f0505)
     embed.add_field(name='Name', value=data['name'], inline=False)
@@ -24,6 +20,29 @@ async def vip(ctx, firstName: str, lastName: str):
 
     await ctx.send(embed=embed)
   else:
-    await ctx.send(message='No vip data found')
+    await ctx.send('No vip data found for: ' + name)
 
-bot.run(TOKEN)
+@bot.command(name='vip', help='Return vip information for your user')
+async def vip(ctx):
+  name = ctx.message.author.nick or ctx.message.author.name
+  data = getVipData(name)
+
+  await sendVipInfo(ctx, name, data)
+
+@bot.command(name='getVip', help='Return vip information of the specified user')
+@commands.has_role(os.getenv('BOT_MANAGER_ROLE'))
+async def getVip(ctx, taggedUser: discord.User):
+  name = taggedUser.display_name
+  data = getVipData(name)
+
+  await sendVipInfo(ctx, name, data)
+
+@bot.command(name='addVip', help='Grant vip to the specified user')
+@commands.has_role(os.getenv('BOT_MANAGER_ROLE'))
+async def addVip(ctx, taggedUser: discord.User):
+  name = taggedUser.display_name
+  data = getVipData(name)
+
+  await sendVipInfo(ctx, name, data)
+
+bot.run(os.getenv('BOT_TOKEN'))
