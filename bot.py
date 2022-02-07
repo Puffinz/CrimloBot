@@ -3,7 +3,7 @@ import discord
 
 from discord.ext import commands
 from dotenv import load_dotenv
-from sheets import getVipData, addVipData
+from sheets import getVipData, addVipMonth
 
 load_dotenv()
 
@@ -21,6 +21,7 @@ async def sendVipInfo(ctx, name, data):
   else:
     await ctx.send('No vip data found for: ' + name)
 
+# !vip
 @bot.command(name='vip', help='Return vip information for your user')
 async def vip(ctx):
   name = ctx.message.author.nick or ctx.message.author.name
@@ -28,6 +29,7 @@ async def vip(ctx):
 
   await sendVipInfo(ctx, name, data)
 
+# !getVip
 @bot.command(name='getVip', help='Return vip information of the specified user')
 @commands.has_role(os.getenv('BOT_MANAGER_ROLE'))
 async def getVip(ctx, taggedUser: discord.User):
@@ -36,13 +38,16 @@ async def getVip(ctx, taggedUser: discord.User):
 
   await sendVipInfo(ctx, name, data)
 
+# !addVip
 @bot.command(name='addVip', help='Grant vip to the specified user')
 @commands.has_role(os.getenv('BOT_MANAGER_ROLE'))
 async def addVip(ctx, taggedUser: discord.User):
   name = taggedUser.display_name
-  addVipData(name)
+
+  addVipMonth(name)
 
   data = getVipData(name)
+
   await sendVipInfo(ctx, name, data)
 
 bot.run(os.getenv('BOT_TOKEN'))
