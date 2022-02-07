@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from discord.utils import get
 from dotenv import load_dotenv
-from sheets import getVipData, addVipMonth
+from sheets import getVipData, addVipMonth, updateVipName
 
 load_dotenv()
 
@@ -35,16 +35,19 @@ async def help(ctx):
   embed = discord.Embed(title = 'Help')
 
   embed.add_field(name='!vip', value='Return vip information for your user', inline=False)
-  embed.add_field(name='!getVip <user>', value='Return vip information of the specified user', inline=False)
-  embed.add_field(name='!addVip <user>', value='Grant 1 month of vip to the specified user', inline=False)
+  embed.add_field(name='!getVip @<user>', value='Return vip information of the specified user', inline=False)
+  embed.add_field(name='!addVip @<user>', value='Grant 1 month of vip to the specified user', inline=False)
+  embed.add_field(name='!renameVip @<user>', value='Update the name of an existing vip with their new discord display name', inline=False)
 
   await ctx.send(embed=embed)
 
 # !vip
 @bot.command(name='vip')
 async def vip(ctx):
-  name = ctx.message.author.nick or ctx.message.author.name
-  data = getVipData(name)
+  name = ctx.message.author.display_name
+  id = ctx.message.author.id
+
+  data = getVipData(id)
 
   await sendVipInfo(ctx, name, data)
 
@@ -52,23 +55,37 @@ async def vip(ctx):
 @bot.command(name='getVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
 async def getVip(ctx, taggedUser: discord.User):
-  name = taggedUser.display_name
-  data = getVipData(name)
+  data = getVipData(taggedUser.id)
 
-  await sendVipInfo(ctx, name, data)
+  await sendVipInfo(ctx, taggedUser.display_name, data)
 
 # !addVip
-@bot.command(name='addVip', help='Grant vip to the specified user')
+@bot.command(name='addVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
 async def addVip(ctx, taggedUser: discord.Member):
   name = taggedUser.display_name
+  id = taggedUser.id
 
-  addVipMonth(name)
+  addVipMonth(name, id)
 
   # Add VIP role
   role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
   await taggedUser.add_roles(role)
-  data = getVipData(name)
+
+  data = getVipData(id)
+
+  await sendVipInfo(ctx, name, data)
+
+# !renameVip
+@bot.command(name='renameVip')
+@commands.has_role(BOT_MANAGER_ROLE_ID)
+async def addVip(ctx, taggedUser: discord.Member):
+  id = taggedUser.id
+  name = taggedUser.display_name
+
+  updateVipName(id, name)
+
+  data = getVipData(id)
 
   await sendVipInfo(ctx, name, data)
 
