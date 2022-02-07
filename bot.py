@@ -32,7 +32,7 @@ bot.remove_command('help') # Remove the default help command
 @bot.command(name='help')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
 async def help(ctx):
-  embed = discord.Embed(title = 'Help')
+  embed = discord.Embed(title = 'Help', color=0x7f0505)
 
   embed.add_field(name='!vip', value='Return vip information for your user', inline=False)
   embed.add_field(name='!getVip @<user>', value='Return vip information of the specified user', inline=False)
