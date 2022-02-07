@@ -50,7 +50,7 @@ def getVipData(name: str):
     return
 
   for row in values:
-    if row[0].strip().lower() == name.strip().lower():
+    if len(row) > 0 and row[0].strip().lower() == name.strip().lower():
       return {
         'name': row[0],
         'startDate': row[1],
@@ -69,7 +69,7 @@ def addVipMonth(name):
   data = None
   if values:
     for index, row in enumerate(values, start=0):
-      if row[0].strip().lower() == name.strip().lower():
+      if len(row) > 0 and row[0].strip().lower() == name.strip().lower():
         userIndex = index
         data = {
           'name': row[0],
