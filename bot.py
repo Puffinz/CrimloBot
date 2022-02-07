@@ -3,7 +3,7 @@ import discord
 
 from discord.ext import commands
 from dotenv import load_dotenv
-from sheets import getVipData
+from sheets import getVipData, addVipData
 
 load_dotenv()
 
@@ -13,7 +13,6 @@ async def sendVipInfo(ctx, name, data):
   if data:
     embed = discord.Embed(title='Crimson Lotus Vip Status', color=0x7f0505)
     embed.add_field(name='Name', value=data['name'], inline=False)
-    embed.add_field(name='Tier', value=data['tier'], inline=False)
     embed.add_field(name='Start Date', value=data['startDate'], inline=False)
     embed.add_field(name='End Date', value=data['endDate'], inline=False)
     embed.add_field(name='Days Remaining ', value=data['remainingDays'], inline=False)
@@ -41,8 +40,9 @@ async def getVip(ctx, taggedUser: discord.User):
 @commands.has_role(os.getenv('BOT_MANAGER_ROLE'))
 async def addVip(ctx, taggedUser: discord.User):
   name = taggedUser.display_name
-  data = getVipData(name)
+  addVipData(name)
 
+  data = getVipData(name)
   await sendVipInfo(ctx, name, data)
 
 bot.run(os.getenv('BOT_TOKEN'))
