@@ -47,11 +47,37 @@ def updateSheet(sheetId: str, range: str, values):
 
   return sheet.values().update(spreadsheetId=sheetId, range=range, valueInputOption='USER_ENTERED', body=body).execute()
 
-# Clear a range in a given sheet
-def clearInSheet(sheetId: str, range: str):
+# Get pageId for given pageName
+def getPageId(sheetId: str, pageName: str):
   sheet = buildService().spreadsheets()
 
-  return sheet.values().clear(spreadsheetId=sheetId, range=range).execute()
+  pageId = None
+  spreadsheets = sheet.get(spreadsheetId=sheetId).execute()
+  for page in spreadsheets['sheets']:
+    if page['properties']['title'] == pageName:
+      pageId = page['properties']['sheetId']
+
+  return pageId
+
+# Delete a single row from a sheet on a given page
+def deleteRow(sheetId: str, pageId: int, rowIndex: int):
+  sheet = buildService().spreadsheets()
+
+  body = {
+    'requests': {
+      'deleteDimension': {
+        'range': {
+          'sheetId': pageId,
+          'dimension': 'ROWS',
+          'startIndex': rowIndex - 1,
+          'endIndex': rowIndex
+        }
+      }
+    }
+  }
+
+  sheet.batchUpdate(spreadsheetId=sheetId, body=body).execute()
+
 
 # Get data from the vip spreadsheet
 def getVipData(id: str):
@@ -135,6 +161,8 @@ def removeExpiredVips():
   removed = []
 
   if values:
+    rowsToDelete = []
+
     for index, row in enumerate(values, start=0):
       if len(row) > 4 and int(row[4]) <= 0:
         # Insert in the history table
@@ -143,12 +171,19 @@ def removeExpiredVips():
 
         appendToSheet(VIP_SHEET_ID, 'HISTORY!A5:F', dataArray)
 
-        # Remove from the main table
-        rowIndex = 5 + index
-        range = 'A' + str(rowIndex) + ':' + str(rowIndex)
-
-        clearInSheet(VIP_SHEET_ID, range)
-
         removed.append(row[1])
+
+        rowsToDelete.append(index + 5)
+
+    pageId = getPageId(VIP_SHEET_ID, 'OVERALL')
+
+    # Make sure the rows are sorted
+    rowsToDelete.sort()
+
+    for index, row in enumerate(rowsToDelete, start=0):
+      # Remove the current place in the list from each row index.
+      # This way they will be accurate after other rows are removed
+      row -= index
+      deleteRow(VIP_SHEET_ID, pageId, row)
 
   return removed

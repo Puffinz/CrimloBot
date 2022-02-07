@@ -37,8 +37,8 @@ async def help(ctx):
   embed.add_field(name='!vip', value='Return vip information for your user', inline=False)
   embed.add_field(name='!getVip @<user>', value='Return vip information of the specified user', inline=False)
   embed.add_field(name='!addVip @<user>', value='Grant 1 month of vip to the specified user', inline=False)
-  embed.add_field(name='!cleanVips', value='Remove expired vips from the main sheet, and add them to the history table. Also remove vip role from the users.', inline=False)
-  embed.add_field(name='!renameVip @<user>', value='Update the name of an existing vip with their new discord display name', inline=False)
+  embed.add_field(name='!cleanVips', value='Remove expired vips from the main sheet, and add them to the history table. Also removes vip role from the users.', inline=False)
+  embed.add_field(name='!renameVip @<user>', value='Update the name of an existing vip - use this if a vip has changed their discord name', inline=False)
 
   await ctx.send(embed=embed)
 
