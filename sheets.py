@@ -47,6 +47,12 @@ def updateSheet(sheetId: str, range: str, values):
 
   return sheet.values().update(spreadsheetId=sheetId, range=range, valueInputOption='USER_ENTERED', body=body).execute()
 
+# Clear a range in a given sheet
+def clearInSheet(sheetId: str, range: str):
+  sheet = buildService().spreadsheets()
+
+  return sheet.values().clear(spreadsheetId=sheetId, range=range).execute()
+
 # Get data from the vip spreadsheet
 def getVipData(id: str):
   values = readSheet(VIP_SHEET_ID, 'A5:E')
@@ -122,3 +128,27 @@ def updateVipName(id, name):
     range = 'A' + str(rowIndex)
 
     updateSheet(VIP_SHEET_ID, range, [name])
+
+def removeExpiredVips():
+  values = readSheet(VIP_SHEET_ID, 'A5:E')
+
+  removed = []
+
+  if values:
+    for index, row in enumerate(values, start=0):
+      if len(row) > 4 and int(row[4]) <= 0:
+        # Insert in the history table
+        dataArray = row
+        dataArray.append(date.today().strftime('%m/%d/%Y'))
+
+        appendToSheet(VIP_SHEET_ID, 'HISTORY!A5:F', dataArray)
+
+        # Remove from the main table
+        rowIndex = 5 + index
+        range = 'A' + str(rowIndex) + ':' + str(rowIndex)
+
+        clearInSheet(VIP_SHEET_ID, range)
+
+        removed.append(row[1])
+
+  return removed

@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from discord.utils import get
 from dotenv import load_dotenv
-from sheets import getVipData, addVipMonth, updateVipName
+from sheets import getVipData, addVipMonth, updateVipName, removeExpiredVips
 
 load_dotenv()
 
@@ -37,12 +37,14 @@ async def help(ctx):
   embed.add_field(name='!vip', value='Return vip information for your user', inline=False)
   embed.add_field(name='!getVip @<user>', value='Return vip information of the specified user', inline=False)
   embed.add_field(name='!addVip @<user>', value='Grant 1 month of vip to the specified user', inline=False)
+  embed.add_field(name='!cleanVips', value='Remove expired vips from the main sheet, and add them to the history table. Also remove vip role from the users.', inline=False)
   embed.add_field(name='!renameVip @<user>', value='Update the name of an existing vip with their new discord display name', inline=False)
 
   await ctx.send(embed=embed)
 
 # !vip
 @bot.command(name='vip')
+@commands.has_role(VIP_ROLE_ID)
 async def vip(ctx):
   name = ctx.message.author.display_name
   id = ctx.message.author.id
@@ -89,4 +91,25 @@ async def addVip(ctx, taggedUser: discord.Member):
 
   await sendVipInfo(ctx, name, data)
 
+
+# !cleanVips
+@bot.command(name='cleanVips')
+@commands.has_role(BOT_MANAGER_ROLE_ID)
+async def cleanVips(ctx):
+  expiredUsers = removeExpiredVips()
+  userCount = len(expiredUsers)
+
+  if expiredUsers:
+    for id in expiredUsers:
+      user = ctx.message.guild.get_member(int(id))
+      if user:
+        role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
+        await user.remove_roles(role)
+
+  if userCount > 0:
+    await ctx.send('Cleaned ' + str(userCount) + ' user(s)')
+  else:
+    await ctx.send('No expired users found')
+
+# Start bot
 bot.run(BOT_TOKEN)
