@@ -2,8 +2,13 @@ import os
 import datetime as dt
 
 from datetime import date, datetime
+from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+
+load_dotenv()
+
+VIP_SHEET_ID = os.getenv('VIP_SHEET_ID')
 
 # Build a google sheets api service with proper credentials
 def buildService():
@@ -44,7 +49,7 @@ def updateSheet(sheetId: str, range: str, values):
 
 # Get data from the vip spreadsheet
 def getVipData(name: str):
-  values = readSheet(os.getenv('VIP_SHEET_ID'), 'A5:D')
+  values = readSheet(VIP_SHEET_ID, 'A5:D')
 
   if not values:
     return
@@ -62,7 +67,7 @@ def getVipData(name: str):
 
 # Add new row to the vip spreadsheet
 def addVipMonth(name):
-  values = readSheet(os.getenv('VIP_SHEET_ID'), 'A5:D')
+  values = readSheet(VIP_SHEET_ID, 'A5:D')
 
   # See if the name is already in the sheet
   userIndex = None
@@ -90,14 +95,14 @@ def addVipMonth(name):
 
     dataArray = [name, startDate.strftime('%m/%d/%Y'), endDate.strftime('%m/%d/%Y')]
 
-    updateSheet(os.getenv('VIP_SHEET_ID'), range, dataArray)
+    updateSheet(VIP_SHEET_ID, range, dataArray)
   else:
     startDate = date.today()
     endDate = startDate + dt.timedelta(days=30)
 
     dataArray = [name, startDate.strftime('%m/%d/%Y'), endDate.strftime('%m/%d/%Y')]
 
-    appendToSheet(os.getenv('VIP_SHEET_ID'), 'A5:C', dataArray)
+    appendToSheet(VIP_SHEET_ID, 'A5:C', dataArray)
 
 
 
