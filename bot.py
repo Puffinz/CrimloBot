@@ -8,7 +8,7 @@ from sheets import getVipData, addVipMonth, updateVipName, removeExpiredVips
 
 load_dotenv()
 
-BOT_PREFIX = os.getenv('BOT_PREFIX')
+BOT_PREFIX = os.getenv('BOT_PREFIX') or '!'
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 BOT_MANAGER_ROLE_ID = int(os.getenv('BOT_MANAGER_ROLE_ID'))
 VIP_ROLE_ID = int(os.getenv('VIP_ROLE_ID'))
@@ -34,11 +34,11 @@ bot.remove_command('help') # Remove the default help command
 async def help(ctx):
   embed = discord.Embed(title = 'Help', color=0x7f0505)
 
-  embed.add_field(name='!vip', value='Return vip information for your user', inline=False)
-  embed.add_field(name='!getVip @<user>', value='Return vip information of the specified user', inline=False)
-  embed.add_field(name='!addVip @<user>', value='Grant 1 month of vip to the specified user', inline=False)
-  embed.add_field(name='!cleanVips', value='Remove expired vips from the main sheet, and add them to the history table. Also removes vip role from the users.', inline=False)
-  embed.add_field(name='!renameVip @<user>', value='Update the name of an existing vip - use this if a vip has changed their discord name', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'vip', value='Return vip information for your user', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'getVip @<user>', value='Return vip information of the specified user', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'addVip @<user>', value='Grant 1 month of vip to the specified user', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'cleanVips', value='Remove expired vips from the main sheet, and add them to the history table. Also removes vip role from the users.', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'renameVip @<user>', value='Update the name of an existing vip - use this if a vip has changed their discord name', inline=False)
 
   await ctx.send(embed=embed)
 

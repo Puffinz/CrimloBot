@@ -11,7 +11,7 @@ pip install -r requirements.txt
 | Variable            | Description                                                                              |
 | ------------------- | ---------------------------------------------------------------------------------------- |
 | BOT_TOKEN           | Token for the bot application from discord                                               |
-| BOT_PREFIX          | Prefix used for all commands (eg. '!')                                                   |
+| BOT_PREFIX          | Prefix used for all commands. Defaults to '!'                                            |
 | VIP_SHEET_ID        | ID for the Google Sheets spreadsheet that the VIP information is on (find it in the url) |
 | BOT_MANAGER_ROLE_ID | Id for the discord role that will be able to use manager commands                        |
 | VIP_ROLE_ID         | Id for the discord role that is a VIP                                                    |
@@ -25,4 +25,4 @@ pip install -r requirements.txt
 python bot.py
 ```
 
-6. Use !help in a channel with the bot to see the list of commands. You must have the role that coresponds to BOT_MANAGER_ROLE_ID.
+6. Use `!help` (use the prefix you defined if not using the default) in a channel with the bot to see the list of commands. You must have the role that coresponds to BOT_MANAGER_ROLE_ID.
