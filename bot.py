@@ -18,7 +18,7 @@ SERVER_ID = int(os.getenv('SERVER_ID'))
 CRON_CHANNEL_ID = int(os.getenv('CRON_CHANNEL_ID'))
 CRON_SCHEDULE = os.getenv('CRON_SCHEDULE')
 
-CRIMLO_COLOR = 0xe00000
+CRIMLO_COLOR = int(0xe00000)
 
 intents = discord.Intents.default()
 intents.messages = True
