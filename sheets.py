@@ -9,6 +9,7 @@ from google.oauth2 import service_account
 load_dotenv()
 
 VIP_SHEET_ID = os.getenv('VIP_SHEET_ID')
+VIP_USER_CLOSE_TO_EXPIRY = os.getenv('VIP_USER_CLOSE_TO_EXPIRY_DAYS')
 
 # Build a google sheets api service with proper credentials
 def buildService():
