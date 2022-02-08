@@ -14,9 +14,11 @@ BOT_PREFIX = os.getenv('BOT_PREFIX') or '!'
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 BOT_MANAGER_ROLE_ID = int(os.getenv('BOT_MANAGER_ROLE_ID'))
 VIP_ROLE_ID = int(os.getenv('VIP_ROLE_ID'))
-SERVER_ID=os.getenv('SERVER_ID')
-BOT_LOG_CHANNEL_ID=os.getenv('BOT_LOG_CHANNEL_ID')
-VIP_CRON_SCHEDULE=os.getenv('VIP_CRON_SCHEDULE')
+SERVER_ID = int(os.getenv('SERVER_ID'))
+CRON_CHANNEL_ID = int(os.getenv('CRON_CHANNEL_ID'))
+CRON_SCHEDULE = os.getenv('CRON_SCHEDULE')
+
+CRIMLO_COLOR = 0xe00000
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -26,7 +28,7 @@ bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
 
 async def sendVipInfo(ctx, name, data):
   if data:
-    embed = discord.Embed(title='Crimson Lotus VIP Status', color=0x7f0505)
+    embed = discord.Embed(title='Crimson Lotus VIP Status', color=CRIMLO_COLOR)
     embed.add_field(name='Name', value=data['name'], inline=False)
     embed.add_field(name='Start Date', value=data['startDate'], inline=False)
     embed.add_field(name='End Date', value=data['endDate'], inline=False)
@@ -41,7 +43,7 @@ bot.remove_command('help') # Remove the default help command
 @bot.command(name='help')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
 async def help(ctx):
-  embed = discord.Embed(title = 'Help', color=0x7f0505)
+  embed = discord.Embed(title = 'Help', color=CRIMLO_COLOR)
 
   embed.add_field(name=BOT_PREFIX + 'vip', value='Return vip information for your user', inline=False)
   embed.add_field(name=BOT_PREFIX + 'getVip @<user>', value='Return vip information of the specified user', inline=False)
@@ -120,7 +122,7 @@ async def cleanVips(ctx):
     await ctx.send('No expired users found')
 
 #@bot.command(name='dm')
-@aiocron.crontab(VIP_CRON_SCHEDULE)
+@aiocron.crontab(CRON_SCHEDULE)
 async def vipCron():
 
   guild = await bot.fetch_guild(SERVER_ID)
@@ -131,20 +133,29 @@ async def vipCron():
   removedUsers = []
 
   if expiredUsers:
-    for id in expiredUsers:
-      user = await guild.fetch_member(id)
+    for expiredUser in expiredUsers:
+      user = await guild.fetch_member(expiredUser['discordId'])
       if user:
         role = get(guild.roles, id=VIP_ROLE_ID)
         await user.remove_roles(role)
-        await user.send('Your VIP Status at The Crimson Lotus has expired. Please come to the venue on our next opening to resubscribe so that you can keep all of your perks. If you have any questions please contact Patchwerk#0001 on Discord.')
+
+        # DM the user
+        embed=discord.Embed(title="VIP EXPIRED", description="Your VIP Status at The Crimson Lotus has expired. Please come to the venue on our next opening to resubscribe so that you can keep all of your perks. ", color=CRIMLO_COLOR)
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/629857962239852593/940494143728259072/LotusLogoFilled.png")
+        embed.add_field(name="Name", value=expiredUser['name'], inline=False)
+        embed.add_field(name="Start Date", value=expiredUser['startDate'], inline=False)
+        embed.add_field(name="End Date", value=expiredUser['endDate'], inline=False)
+        embed.set_footer(text="Thank you for being one of our valued patrons. If you have any questions please contact Patchwerk#0001 on Discord.")
+
+        await user.send(embed=embed)
 
         removedUsers.append(user.display_name)
 
   # Log the report to the specified channel
 
-  logChannel = bot.get_channel(940458579117342782)
+  logChannel = bot.get_channel(CRON_CHANNEL_ID)
 
-  embed = discord.Embed(title='Crimlo Bot Scheduled Report', color=0x7f0505)
+  embed = discord.Embed(title='Crimlo Bot Scheduled Report', color=CRIMLO_COLOR)
   embed.add_field(name='Date', value=date.today().strftime('%m/%d/%Y'))
 
   if removedUsers:

@@ -172,7 +172,12 @@ def removeExpiredVips():
 
         appendToSheet(VIP_SHEET_ID, 'HISTORY!A5:F', dataArray)
 
-        removed.append(row[1])
+        removed.append({
+          'name': row[0],
+          'discordId': row[1],
+          'startDate': row[2],
+          'endDate': row[3]
+        })
 
         rowsToDelete.append(index + 5)
 
