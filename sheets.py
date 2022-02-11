@@ -1,4 +1,3 @@
-from json import JSONDecodeError
 import os
 import datetime as dt
 
@@ -6,7 +5,9 @@ from datetime import date
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-from exceptions import SheetException
+from exceptions import GoogleAPIException, SheetException
+from httplib2 import ServerNotFoundError
+from json import JSONDecodeError
 
 load_dotenv()
 
@@ -16,7 +17,11 @@ VIP_USER_CLOSE_TO_EXPIRY = os.getenv('VIP_USER_CLOSE_TO_EXPIRY_DAYS')
 # Build a google sheets api service with proper credentials
 def buildService():
   scopes = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/spreadsheets"]
-  credentials = service_account.Credentials.from_service_account_file('creds.json', scopes=scopes)
+
+  try:
+    credentials = service_account.Credentials.from_service_account_file('creds.json', scopes=scopes)
+  except ServerNotFoundError:
+    raise GoogleAPIException
 
   return build('sheets', 'v4', credentials=credentials)
 
@@ -27,7 +32,7 @@ def readSheet(sheetId: str, range: str):
   try:
     result = sheet.values().get(spreadsheetId=sheetId, range=range, valueRenderOption='UNFORMATTED_VALUE').execute()
   except JSONDecodeError:
-    raise SheetException('Google API Token')
+    raise GoogleAPIException
 
   return result.get('values', [])
 

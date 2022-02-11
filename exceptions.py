@@ -8,3 +8,9 @@ class SheetException(Exception):
         self.message += ' for user: ' + user
       self.message = '`' + self.message + '`'
       super().__init__(self.message)
+
+class GoogleAPIException(Exception):
+
+  def __init__(self):
+    self.message = '`Error connecting or receiving proper token from the google api`'
+    super().__init__(self.message)

@@ -6,9 +6,8 @@ from datetime import date
 from discord.ext import commands
 from discord.utils import get
 from dotenv import load_dotenv
-from exceptions import SheetException
+from exceptions import GoogleAPIException, SheetException
 from sheets import getVipData, addVipMonths, updateVipName, removeExpiredVips
-from json import JSONDecodeError
 
 load_dotenv()
 
@@ -73,7 +72,7 @@ async def vip(ctx):
     data = getVipData(id)
 
     await sendVipInfo(ctx, name, data)
-  except SheetException as e:
+  except (SheetException, GoogleAPIException) as e:
     await reportError(e.message)
 
 @vip.error
@@ -88,7 +87,7 @@ async def getVip(ctx, taggedUser: discord.User):
     data = getVipData(taggedUser.id)
 
     await sendVipInfo(ctx, taggedUser.display_name, data)
-  except SheetException as e:
+  except (SheetException, GoogleAPIException) as e:
     await reportError(e.message)
 
 @getVip.error
@@ -112,7 +111,7 @@ async def addVip(ctx, taggedUser: discord.Member, months = 1):
     data = getVipData(id)
 
     await sendVipInfo(ctx, name, data)
-  except SheetException as e:
+  except (SheetException, GoogleAPIException) as e:
     await reportError(e.message)
 
 @addVip.error
@@ -132,7 +131,7 @@ async def renameVip(ctx, taggedUser: discord.Member):
     data = getVipData(id)
 
     await sendVipInfo(ctx, name, data)
-  except SheetException as e:
+  except (SheetException, GoogleAPIException) as e:
     await reportError(e.message)
 
 async def reportError(errorMessage: str):
@@ -166,7 +165,7 @@ async def cleanVips(manual = False):
 
   try:
     expiredUsers = removeExpiredVips()
-  except SheetException as e:
+  except (SheetException, GoogleAPIException) as e:
     error = e.message
 
   removedUsers = []
