@@ -5,6 +5,7 @@ from datetime import date, datetime
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+from exceptions import SheetException
 
 load_dotenv()
 
@@ -22,7 +23,7 @@ def buildService():
 def readSheet(sheetId: str, range: str):
   sheet = buildService().spreadsheets()
 
-  result = sheet.values().get(spreadsheetId=sheetId, range=range).execute()
+  result = sheet.values().get(spreadsheetId=sheetId, range=range, valueRenderOption='UNFORMATTED_VALUE').execute()
 
   return result.get('values', [])
 
@@ -79,7 +80,6 @@ def deleteRow(sheetId: str, pageId: int, rowIndex: int):
 
   sheet.batchUpdate(spreadsheetId=sheetId, body=body).execute()
 
-
 # Get data from the vip spreadsheet
 def getVipData(id: str):
   values = readSheet(VIP_SHEET_ID, 'A5:E')
@@ -89,13 +89,7 @@ def getVipData(id: str):
 
   for row in values:
     if len(row) > 1 and str(row[1]) == str(id):
-      return {
-        'name': row[0],
-        'discordId': row[1],
-        'startDate': row[2],
-        'endDate': row[3],
-        'remainingDays': row[4]
-      }
+      return rowToVipMap(row, True)
 
   return None
 
@@ -111,20 +105,14 @@ def addVipMonths(name, id, months: int):
     for index, row in enumerate(values, start=0):
       if len(row) > 1 and str(row[1]) == str(id):
         userIndex = index
-        data = {
-          'name': row[0],
-          'discordId': row[1],
-          'startDate': row[2],
-          'endDate': row[3],
-          'remainingDays': row[4]
-        }
+        data = rowToVipMap(row)
 
   if data:
     rowIndex = 5 + userIndex
     range = 'A' + str(rowIndex) + ':D' + str(rowIndex)
     if int(data['remainingDays']) > 0:
-      startDate = datetime.strptime(data['startDate'], '%m/%d/%Y')
-      endDate = datetime.strptime(data['endDate'], '%m/%d/%Y') + dt.timedelta(days=days)
+      startDate = data['startDate']
+      endDate = data['endDate'] + dt.timedelta(days=days)
     else:
       startDate = date.today()
       endDate = startDate + dt.timedelta(days=days)
@@ -173,12 +161,7 @@ def removeExpiredVips():
 
         appendToSheet(VIP_SHEET_ID, 'HISTORY!A5:F', dataArray)
 
-        removed.append({
-          'name': row[0],
-          'discordId': row[1],
-          'startDate': row[2],
-          'endDate': row[3]
-        })
+        removed.append(rowToVipMap(row))
 
         rowsToDelete.append(index + 5)
 
@@ -194,3 +177,46 @@ def removeExpiredVips():
       deleteRow(VIP_SHEET_ID, pageId, row)
 
   return removed
+
+def convertXLSDateTime(date):
+  return (dt.datetime(1899, 12, 30) + dt.timedelta(days=date))
+
+def rowToVipMap(row, text = False):
+  map = {}
+
+  if len(row) > 0 and row[0] != None and row[0] != '':
+    map['name'] = row[0]
+  else:
+    raise SheetException('A Name')
+
+  if len(row) > 1 and row[1] != None and row[1] != '':
+    map['discordId'] = row[1]
+  else:
+    raise SheetException('Discord ID', map['name'])
+
+  if len(row) > 2 and row[2] != None and row[2] != '':
+    try:
+      map['startDate'] = convertXLSDateTime(row[2])
+    except TypeError:
+      raise SheetException('Start Date', map['name'])
+    if text:
+      map['startDate'] = map['startDate'].strftime('%m/%d/%Y')
+  else:
+    raise SheetException('Start Date', map['name'])
+
+  if len(row) > 3 and row[3] != None and row[3] != '':
+    try:
+      map['endDate'] = convertXLSDateTime(row[3])
+    except TypeError:
+      raise SheetException('End Date', map['name'])
+    if text:
+      map['endDate'] = map['endDate'].strftime('%m/%d/%Y')
+  else:
+    raise SheetException('End Date', map['name'])
+
+  if len(row) > 4:
+    map['remainingDays'] = row[4]
+  else:
+    map['remainingDays'] = 0
+
+  return map

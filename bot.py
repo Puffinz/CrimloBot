@@ -6,6 +6,7 @@ from datetime import date
 from discord.ext import commands
 from discord.utils import get
 from dotenv import load_dotenv
+from exceptions import SheetException
 from sheets import getVipData, addVipMonths, updateVipName, removeExpiredVips
 
 load_dotenv()
@@ -59,17 +60,23 @@ async def vip(ctx):
   name = ctx.message.author.display_name
   id = ctx.message.author.id
 
-  data = getVipData(id)
+  try:
+    data = getVipData(id)
 
-  await sendVipInfo(ctx, name, data)
+    await sendVipInfo(ctx, name, data)
+  except SheetException as e:
+    await reportError(e.message)
 
 # !getVip
 @bot.command(name='getVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
 async def getVip(ctx, taggedUser: discord.User):
-  data = getVipData(taggedUser.id)
+  try:
+    data = getVipData(taggedUser.id)
 
-  await sendVipInfo(ctx, taggedUser.display_name, data)
+    await sendVipInfo(ctx, taggedUser.display_name, data)
+  except SheetException as e:
+    await reportError(e.message)
 
 # !addVip
 @bot.command(name='addVip')
@@ -78,15 +85,18 @@ async def addVip(ctx, taggedUser: discord.Member, months = 1):
   name = taggedUser.display_name
   id = taggedUser.id
 
-  addVipMonths(name, id, months)
+  try:
+    addVipMonths(name, id, months)
 
-  # Add VIP role
-  role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
-  await taggedUser.add_roles(role)
+    # Add VIP role
+    role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
+    await taggedUser.add_roles(role)
 
-  data = getVipData(id)
+    data = getVipData(id)
 
-  await sendVipInfo(ctx, name, data)
+    await sendVipInfo(ctx, name, data)
+  except SheetException as e:
+    await reportError(e.message)
 
 # !renameVip
 @bot.command(name='renameVip')
@@ -95,30 +105,40 @@ async def addVip(ctx, taggedUser: discord.Member):
   id = taggedUser.id
   name = taggedUser.display_name
 
-  updateVipName(id, name)
+  try:
+    updateVipName(id, name)
 
-  data = getVipData(id)
+    data = getVipData(id)
 
-  await sendVipInfo(ctx, name, data)
+    await sendVipInfo(ctx, name, data)
+  except SheetException as e:
+    await reportError(e.message)
 
 # !cleanVips
 @bot.command(name='cleanVips')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
 async def cleanVips(ctx):
-  expiredUsers = removeExpiredVips()
-  userCount = len(expiredUsers)
+  try:
+    expiredUsers = removeExpiredVips()
+    userCount = len(expiredUsers)
 
-  if expiredUsers:
-    for id in expiredUsers:
-      user = ctx.message.guild.get_member(int(id))
-      if user:
-        role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
-        await user.remove_roles(role)
+    if expiredUsers:
+      for id in expiredUsers:
+        user = ctx.message.guild.get_member(int(id))
+        if user:
+          role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
+          await user.remove_roles(role)
 
-  if userCount > 0:
-    await ctx.send('Cleaned ' + str(userCount) + ' user(s)')
-  else:
-    await ctx.send('No expired users found')
+    if userCount > 0:
+      await ctx.send('Cleaned ' + str(userCount) + ' user(s)')
+    else:
+      await ctx.send('No expired users found')
+  except SheetException as e:
+    await reportError(e.message)
+
+async def reportError(errorMessage: str):
+  logChannel = bot.get_channel(CRON_CHANNEL_ID)
+  await logChannel.send(errorMessage)
 
 #@bot.command(name='dm')
 @aiocron.crontab(CRON_SCHEDULE)
@@ -128,7 +148,14 @@ async def vipCron():
 
   # Clean up expired Vips
 
-  expiredUsers = removeExpiredVips()
+  expiredUsers = None
+  error = False
+
+  try:
+    expiredUsers = removeExpiredVips()
+  except SheetException as e:
+    error = e.message
+
   removedUsers = []
 
   if expiredUsers:
@@ -159,6 +186,10 @@ async def vipCron():
 
   if removedUsers:
     embed.add_field(name='Removed and DM\'d the Following Users', value= '\n'.join(removedUsers), inline=False)
+
+  if error:
+    embed.description = 'There were issues running the scheduled job, review the spreadsheet and run !cleanVips manually'
+    embed.add_field(name='Error', value=error, inline=False)
 
   await logChannel.send(embed=embed)
 
