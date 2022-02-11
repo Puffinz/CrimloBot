@@ -49,7 +49,7 @@ async def help(ctx):
   embed.add_field(name=BOT_PREFIX + 'vip', value='Return vip information for your user', inline=False)
   embed.add_field(name=BOT_PREFIX + 'getVip @<user>', value='Return vip information of the specified user', inline=False)
   embed.add_field(name=BOT_PREFIX + 'addVip @<user>', value='Grant 1 month of vip to the specified user', inline=False)
-  embed.add_field(name=BOT_PREFIX + 'cleanVips', value='Remove expired vips from the main sheet, and add them to the history table. Also removes vip role from the users.', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'cleanVips', value='Manually run the scheduled cleanup task.', inline=False)
   embed.add_field(name=BOT_PREFIX + 'renameVip @<user>', value='Update the name of an existing vip - use this if a vip has changed their discord name', inline=False)
 
   await ctx.send(embed=embed)
@@ -114,35 +114,24 @@ async def addVip(ctx, taggedUser: discord.Member):
   except SheetException as e:
     await reportError(e.message)
 
-# !cleanVips
-@bot.command(name='cleanVips')
-@commands.has_role(BOT_MANAGER_ROLE_ID)
-async def cleanVips(ctx):
-  try:
-    expiredUsers = removeExpiredVips()
-    userCount = len(expiredUsers)
-
-    if expiredUsers:
-      for id in expiredUsers:
-        user = ctx.message.guild.get_member(int(id))
-        if user:
-          role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
-          await user.remove_roles(role)
-
-    if userCount > 0:
-      await ctx.send('Cleaned ' + str(userCount) + ' user(s)')
-    else:
-      await ctx.send('No expired users found')
-  except SheetException as e:
-    await reportError(e.message)
-
 async def reportError(errorMessage: str):
   logChannel = bot.get_channel(CRON_CHANNEL_ID)
   await logChannel.send(errorMessage)
 
-#@bot.command(name='dm')
+
+# !cleanVips
+@bot.command(name='cleanVips')
+@commands.has_role(BOT_MANAGER_ROLE_ID)
+async def cleanVipsCommand(ctx):
+  await cleanVips(True)
+
+# Cron scheduled task
 @aiocron.crontab(CRON_SCHEDULE)
 async def vipCron():
+  await cleanVips()
+
+# Vip Cleaning
+async def cleanVips(manual = False):
 
   guild = await bot.fetch_guild(SERVER_ID)
 
@@ -166,12 +155,12 @@ async def vipCron():
         await user.remove_roles(role)
 
         # DM the user
-        embed=discord.Embed(title="VIP EXPIRED", description="Your VIP Status at The Crimson Lotus has expired. Please come to the venue on our next opening to resubscribe so that you can keep all of your perks. ", color=CRIMLO_COLOR)
-        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/629857962239852593/940494143728259072/LotusLogoFilled.png")
-        embed.add_field(name="Name", value=expiredUser['name'], inline=False)
-        embed.add_field(name="Start Date", value=expiredUser['startDate'], inline=False)
-        embed.add_field(name="End Date", value=expiredUser['endDate'], inline=False)
-        embed.set_footer(text="Thank you for being one of our valued patrons. If you have any questions please contact Patchwerk#0001 on Discord.")
+        embed=discord.Embed(title='VIP EXPIRED', description='Your VIP Status at The Crimson Lotus has expired. Please come to the venue on our next opening to resubscribe so that you can keep all of your perks. ', color=CRIMLO_COLOR)
+        embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/629857962239852593/940494143728259072/LotusLogoFilled.png')
+        embed.add_field(name='Name', value=expiredUser['name'], inline=False)
+        embed.add_field(name='Start Date', value=expiredUser['startDate'], inline=False)
+        embed.add_field(name='End Date', value=expiredUser['endDate'], inline=False)
+        embed.set_footer(text='Thank you for being one of our valued patrons. If you have any questions please contact Patchwerk#0001 on Discord.')
 
         await user.send(embed=embed)
 
@@ -181,14 +170,19 @@ async def vipCron():
 
   logChannel = bot.get_channel(CRON_CHANNEL_ID)
 
-  embed = discord.Embed(title='Crimlo Bot Scheduled Report', color=CRIMLO_COLOR)
+  if manual:
+    title = 'Crimlo Bot Manual Report'
+  else:
+    title = 'Crimlo Bot Scheduled Report'
+
+  embed = discord.Embed(title=title, color=CRIMLO_COLOR)
   embed.add_field(name='Date', value=date.today().strftime('%m/%d/%Y'))
 
   if removedUsers:
     embed.add_field(name='Removed and DM\'d the Following Users', value= '\n'.join(removedUsers), inline=False)
 
   if error:
-    embed.description = 'There were issues running the scheduled job, review the spreadsheet and run !cleanVips manually'
+    embed.description = 'There were issues running the scheduled job, review the posted errors and the spreadsheet, then run !cleanVips manually'
     embed.add_field(name='Error', value=error, inline=False)
 
   await logChannel.send(embed=embed)
