@@ -78,6 +78,13 @@ async def getVip(ctx, taggedUser: discord.User):
   except SheetException as e:
     await reportError(e.message)
 
+@getVip.error
+async def getVip_error(ctx, error):
+  if isinstance(error, commands.MissingRequiredArgument):
+    await ctx.send('You must include a tagged user.', delete_after=5)
+  elif isinstance(error, commands.MissingPermissions):
+    return
+
 # !addVip
 @bot.command(name='addVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
@@ -98,10 +105,17 @@ async def addVip(ctx, taggedUser: discord.Member, months = 1):
   except SheetException as e:
     await reportError(e.message)
 
+@addVip.error
+async def addVip_error(ctx, error):
+  if isinstance(error, commands.MissingRequiredArgument):
+    await ctx.send('You must include a tagged user.', delete_after=5)
+  elif isinstance(error, commands.MissingPermissions):
+    return
+
 # !renameVip
 @bot.command(name='renameVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
-async def addVip(ctx, taggedUser: discord.Member):
+async def renameVip(ctx, taggedUser: discord.Member):
   id = taggedUser.id
   name = taggedUser.display_name
 
@@ -118,6 +132,12 @@ async def reportError(errorMessage: str):
   logChannel = bot.get_channel(CRON_CHANNEL_ID)
   await logChannel.send(errorMessage)
 
+@renameVip.error
+async def renameVip_error(ctx, error):
+  if isinstance(error, commands.MissingRequiredArgument):
+    await ctx.send('You must include a tagged user.', delete_after=5)
+  elif isinstance(error, commands.MissingPermissions):
+    return
 
 # !cleanVips
 @bot.command(name='cleanVips')
