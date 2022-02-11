@@ -159,7 +159,7 @@ async def vipCron():
   embed.add_field(name='Date', value=date.today().strftime('%m/%d/%Y'))
 
   if removedUsers:
-    embed.add_field(name='Removed and Dmed the Following Users', value= '\n'.join(removedUsers), inline=False)
+    embed.add_field(name='Removed and DM\'d the Following Users', value= '\n'.join(removedUsers), inline=False)
 
   await logChannel.send(embed=embed)
 
