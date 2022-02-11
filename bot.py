@@ -6,7 +6,7 @@ from datetime import date
 from discord.ext import commands
 from discord.utils import get
 from dotenv import load_dotenv
-from sheets import getVipData, addVipMonth, updateVipName, removeExpiredVips
+from sheets import getVipData, addVipMonths, updateVipName, removeExpiredVips
 
 load_dotenv()
 
@@ -74,11 +74,11 @@ async def getVip(ctx, taggedUser: discord.User):
 # !addVip
 @bot.command(name='addVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
-async def addVip(ctx, taggedUser: discord.Member):
+async def addVip(ctx, taggedUser: discord.Member, months = 1):
   name = taggedUser.display_name
   id = taggedUser.id
 
-  addVipMonth(name, id)
+  addVipMonths(name, id, months)
 
   # Add VIP role
   role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
@@ -100,7 +100,6 @@ async def addVip(ctx, taggedUser: discord.Member):
   data = getVipData(id)
 
   await sendVipInfo(ctx, name, data)
-
 
 # !cleanVips
 @bot.command(name='cleanVips')

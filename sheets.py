@@ -99,8 +99,9 @@ def getVipData(id: str):
 
   return None
 
-# Add new row to the vip spreadsheet
-def addVipMonth(name, id):
+# Add given number of months to vip in spreadsheet
+def addVipMonths(name, id, months: int):
+  days = 30 * months
   values = readSheet(VIP_SHEET_ID, 'A5:E')
 
   # See if the name is already in the sheet
@@ -123,17 +124,17 @@ def addVipMonth(name, id):
     range = 'A' + str(rowIndex) + ':D' + str(rowIndex)
     if int(data['remainingDays']) > 0:
       startDate = datetime.strptime(data['startDate'], '%m/%d/%Y')
-      endDate = datetime.strptime(data['endDate'], '%m/%d/%Y') + dt.timedelta(days=30)
+      endDate = datetime.strptime(data['endDate'], '%m/%d/%Y') + dt.timedelta(days=days)
     else:
       startDate = date.today()
-      endDate = startDate + dt.timedelta(days=30)
+      endDate = startDate + dt.timedelta(days=days)
 
     dataArray = [name, str(data['discordId']), startDate.strftime('%m/%d/%Y'), endDate.strftime('%m/%d/%Y')]
 
     updateSheet(VIP_SHEET_ID, range, dataArray)
   else:
     startDate = date.today()
-    endDate = startDate + dt.timedelta(days=30)
+    endDate = startDate + dt.timedelta(days=days)
 
     dataArray = [name, str(id), startDate.strftime('%m/%d/%Y'), endDate.strftime('%m/%d/%Y')]
 
