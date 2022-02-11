@@ -1,7 +1,8 @@
+from json import JSONDecodeError
 import os
 import datetime as dt
 
-from datetime import date, datetime
+from datetime import date
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
@@ -23,7 +24,10 @@ def buildService():
 def readSheet(sheetId: str, range: str):
   sheet = buildService().spreadsheets()
 
-  result = sheet.values().get(spreadsheetId=sheetId, range=range, valueRenderOption='UNFORMATTED_VALUE').execute()
+  try:
+    result = sheet.values().get(spreadsheetId=sheetId, range=range, valueRenderOption='UNFORMATTED_VALUE').execute()
+  except JSONDecodeError:
+    raise SheetException('Google API Token')
 
   return result.get('values', [])
 

@@ -8,6 +8,7 @@ from discord.utils import get
 from dotenv import load_dotenv
 from exceptions import SheetException
 from sheets import getVipData, addVipMonths, updateVipName, removeExpiredVips
+from json import JSONDecodeError
 
 load_dotenv()
 
@@ -26,6 +27,14 @@ intents.messages = True
 intents.members = True
 
 bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
+
+async def handleErrors(ctx, error):
+  if isinstance(error, commands.MissingRequiredArgument):
+    await ctx.send('You must include a tagged user.', delete_after=5)
+  elif isinstance(error, commands.MissingPermissions):
+    return
+  else:
+    print(error)
 
 async def sendVipInfo(ctx, name, data):
   if data:
@@ -67,6 +76,10 @@ async def vip(ctx):
   except SheetException as e:
     await reportError(e.message)
 
+@vip.error
+async def vip_error(ctx, error):
+  await handleErrors(ctx, error)
+
 # !getVip
 @bot.command(name='getVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
@@ -80,10 +93,7 @@ async def getVip(ctx, taggedUser: discord.User):
 
 @getVip.error
 async def getVip_error(ctx, error):
-  if isinstance(error, commands.MissingRequiredArgument):
-    await ctx.send('You must include a tagged user.', delete_after=5)
-  elif isinstance(error, commands.MissingPermissions):
-    return
+  await handleErrors(ctx, error)
 
 # !addVip
 @bot.command(name='addVip')
@@ -107,10 +117,7 @@ async def addVip(ctx, taggedUser: discord.Member, months = 1):
 
 @addVip.error
 async def addVip_error(ctx, error):
-  if isinstance(error, commands.MissingRequiredArgument):
-    await ctx.send('You must include a tagged user.', delete_after=5)
-  elif isinstance(error, commands.MissingPermissions):
-    return
+  await handleErrors(ctx, error)
 
 # !renameVip
 @bot.command(name='renameVip')
@@ -134,10 +141,7 @@ async def reportError(errorMessage: str):
 
 @renameVip.error
 async def renameVip_error(ctx, error):
-  if isinstance(error, commands.MissingRequiredArgument):
-    await ctx.send('You must include a tagged user.', delete_after=5)
-  elif isinstance(error, commands.MissingPermissions):
-    return
+  await handleErrors(ctx, error)
 
 # !cleanVips
 @bot.command(name='cleanVips')
