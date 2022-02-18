@@ -35,9 +35,10 @@ async def handleErrors(ctx, error):
   else:
     print(error)
 
-async def sendVipInfo(ctx, name, data):
+async def sendVipInfo(ctx, user: discord.Member, data):
   if data:
     embed = discord.Embed(title='Crimson Lotus VIP Status', color=CRIMLO_COLOR)
+    embed.set_thumbnail(url=user.avatar_url)
     embed.add_field(name='Name', value=data['name'], inline=False)
     embed.add_field(name='Start Date', value=data['startDate'], inline=False)
     embed.add_field(name='End Date', value=data['endDate'], inline=False)
@@ -45,7 +46,7 @@ async def sendVipInfo(ctx, name, data):
 
     await ctx.send(embed=embed)
   else:
-    await ctx.send('No vip data found for: ' + name)
+    await ctx.send('No vip data found for: ' + user.display_name)
 
 # !help
 bot.remove_command('help') # Remove the default help command
@@ -65,13 +66,12 @@ async def help(ctx):
 # !vip
 @bot.command(name='vip')
 async def vip(ctx):
-  name = ctx.message.author.display_name
-  id = ctx.message.author.id
+  user = ctx.message.author
 
   try:
-    data = getVipData(id)
+    data = getVipData(user.id)
 
-    await sendVipInfo(ctx, name, data)
+    await sendVipInfo(ctx, user, data)
   except (SheetException, GoogleAPIException) as e:
     await reportError(e.message)
 
@@ -86,7 +86,7 @@ async def getVip(ctx, taggedUser: discord.User):
   try:
     data = getVipData(taggedUser.id)
 
-    await sendVipInfo(ctx, taggedUser.display_name, data)
+    await sendVipInfo(ctx, taggedUser, data)
   except (SheetException, GoogleAPIException) as e:
     await reportError(e.message)
 
@@ -110,7 +110,7 @@ async def addVip(ctx, taggedUser: discord.Member, months = 1):
 
     data = getVipData(id)
 
-    await sendVipInfo(ctx, name, data)
+    await sendVipInfo(ctx, taggedUser, data)
   except (SheetException, GoogleAPIException) as e:
     await reportError(e.message)
 
@@ -130,7 +130,7 @@ async def renameVip(ctx, taggedUser: discord.Member):
 
     data = getVipData(id)
 
-    await sendVipInfo(ctx, name, data)
+    await sendVipInfo(ctx, taggedUser, data)
   except (SheetException, GoogleAPIException) as e:
     await reportError(e.message)
 
