@@ -17,7 +17,8 @@ pip install -r requirements.txt
 | VIP_ROLE_ID         | Id for the discord role that is a VIP                                                    |
 | SERVER_ID           | Id for your discord server that the bot is on                                            |
 | CRON_CHANNEL_ID     | Channel where vip cron logs will output                                                  |
-| CRON_SCHEDULE       | Schedult that the cron for VIPs will be run                                              |
+| CRON_SCHEDULE       | Schedule that the cron for VIPs will be run on                                           |
+| TIMEZONE            | The timezone used when comparing to the current day                                      |
 
 3. Add the service account key file named as 'creds.json' to the project. It must have access to the Google Sheets API.
 
