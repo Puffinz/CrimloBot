@@ -4,6 +4,7 @@ import aiocron
 
 from discord.ext import commands
 from discord.utils import get
+from discord.errors import NotFound
 from dotenv import load_dotenv
 from exceptions import GoogleAPIException, SheetException
 from sheets import getVipData, addVipMonths, updateVipName, removeExpiredVips
@@ -169,25 +170,29 @@ async def cleanVips(manual = False):
     error = e.message
 
   removedUsers = []
+  notFoundUsers = []
 
   if expiredUsers:
     for expiredUser in expiredUsers:
-      user = await guild.fetch_member(expiredUser['discordId'])
-      if user:
-        role = get(guild.roles, id=VIP_ROLE_ID)
-        await user.remove_roles(role)
+      try:
+        user = await guild.fetch_member(expiredUser['discordId'])
+        if user:
+          role = get(guild.roles, id=VIP_ROLE_ID)
+          await user.remove_roles(role)
 
-        # DM the user
-        embed=discord.Embed(title='VIP EXPIRED', description='Your VIP Status at The Crimson Lotus has expired. Please come to the venue on our next opening to resubscribe so that you can keep all of your perks. ', color=CRIMLO_COLOR)
-        embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/629857962239852593/940494143728259072/LotusLogoFilled.png')
-        embed.add_field(name='Name', value=expiredUser['name'], inline=False)
-        embed.add_field(name='Start Date', value=expiredUser['startDate'], inline=False)
-        embed.add_field(name='End Date', value=expiredUser['endDate'], inline=False)
-        embed.set_footer(text='Thank you for being one of our valued patrons. If you have any questions please contact Patchwerk#0001 on Discord.')
+          # DM the user
+          embed=discord.Embed(title='VIP EXPIRED', description='Your VIP Status at The Crimson Lotus has expired. Please come to the venue on our next opening to resubscribe so that you can keep all of your perks. ', color=CRIMLO_COLOR)
+          embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/629857962239852593/940494143728259072/LotusLogoFilled.png')
+          embed.add_field(name='Name', value=expiredUser['name'], inline=False)
+          embed.add_field(name='Start Date', value=expiredUser['startDate'], inline=False)
+          embed.add_field(name='End Date', value=expiredUser['endDate'], inline=False)
+          embed.set_footer(text='Thank you for being one of our valued patrons. If you have any questions please contact Patchwerk#0001 on Discord.')
 
-        await user.send(embed=embed)
+          await user.send(embed=embed)
 
-        removedUsers.append(user.display_name)
+          removedUsers.append(user.display_name)
+      except (NotFound):
+        notFoundUsers.append(expiredUser['name'])
 
   # Log the report to the specified channel
 
@@ -202,7 +207,10 @@ async def cleanVips(manual = False):
   embed.add_field(name='Date', value=getCurrentDate().strftime('%m/%d/%Y'))
 
   if removedUsers:
-    embed.add_field(name='Removed and DM\'d the Following Users', value= '\n'.join(removedUsers), inline=False)
+    embed.add_field(name='Removed and DM\'d the Following Users', value='\n'.join(removedUsers), inline=False)
+
+  if notFoundUsers:
+    embed.add_field(name='Failed to change the role and DM the following expired users, which could not be found', value='\n'.join(notFoundUsers), inline=False)
 
   if error:
     embed.description = 'There were issues running the scheduled job, review the posted errors and the spreadsheet, then run !cleanVips manually'
