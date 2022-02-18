@@ -1,13 +1,13 @@
 import os
 import datetime as dt
 
-from datetime import date
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from exceptions import GoogleAPIException, SheetException
 from httplib2 import ServerNotFoundError
 from json import JSONDecodeError
+from util import getCurrentDate
 
 load_dotenv()
 
@@ -123,14 +123,14 @@ def addVipMonths(name, id, months: int):
       startDate = data['startDate']
       endDate = data['endDate'] + dt.timedelta(days=days)
     else:
-      startDate = date.today()
+      startDate = getCurrentDate()
       endDate = startDate + dt.timedelta(days=days)
 
     dataArray = [name, str(data['discordId']), startDate.strftime('%m/%d/%Y'), endDate.strftime('%m/%d/%Y')]
 
     updateSheet(VIP_SHEET_ID, range, dataArray)
   else:
-    startDate = date.today()
+    startDate = getCurrentDate()
     endDate = startDate + dt.timedelta(days=days)
 
     dataArray = [name, str(id), startDate.strftime('%m/%d/%Y'), endDate.strftime('%m/%d/%Y')]
@@ -166,7 +166,7 @@ def removeExpiredVips():
       if len(row) > 4 and int(row[4]) <= 0:
         # Insert in the history table
         dataArray = row
-        dataArray.append(date.today().strftime('%m/%d/%Y'))
+        dataArray.append(getCurrentDate().strftime('%m/%d/%Y'))
 
         appendToSheet(VIP_SHEET_ID, 'HISTORY!A5:F', dataArray)
 

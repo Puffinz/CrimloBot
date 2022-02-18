@@ -2,12 +2,12 @@ import os
 import discord
 import aiocron
 
-from datetime import date
 from discord.ext import commands
 from discord.utils import get
 from dotenv import load_dotenv
 from exceptions import GoogleAPIException, SheetException
 from sheets import getVipData, addVipMonths, updateVipName, removeExpiredVips
+from util import getCurrentDate
 
 load_dotenv()
 
@@ -199,7 +199,7 @@ async def cleanVips(manual = False):
     title = 'Crimlo Bot Scheduled Report'
 
   embed = discord.Embed(title=title, color=CRIMLO_COLOR)
-  embed.add_field(name='Date', value=date.today().strftime('%m/%d/%Y'))
+  embed.add_field(name='Date', value=getCurrentDate().strftime('%m/%d/%Y'))
 
   if removedUsers:
     embed.add_field(name='Removed and DM\'d the Following Users', value= '\n'.join(removedUsers), inline=False)
