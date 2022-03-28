@@ -6,7 +6,6 @@ from discord.ext import commands
 from discord.utils import get
 from discord.errors import NotFound
 from dotenv import load_dotenv
-from exceptions import GoogleAPIException, SheetException
 from sheets import getVipData, addVipMonths, updateVipName, removeExpiredVips
 from util import getCurrentDate
 

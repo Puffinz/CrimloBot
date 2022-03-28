@@ -12,7 +12,6 @@ pip install -r requirements.txt
 | ------------------- | ---------------------------------------------------------------------------------------- |
 | BOT_TOKEN           | Token for the bot application from discord                                               |
 | BOT_PREFIX          | Prefix used for all commands. Defaults to '!'                                            |
-| VIP_SHEET_ID        | ID for the Google Sheets spreadsheet that the VIP information is on (find it in the url) |
 | BOT_MANAGER_ROLE_ID | Id for the discord role that will be able to use manager commands                        |
 | VIP_ROLE_ID         | Id for the discord role that is a VIP                                                    |
 | SERVER_ID           | Id for your discord server that the bot is on                                            |
@@ -20,11 +19,7 @@ pip install -r requirements.txt
 | CRON_SCHEDULE       | Schedule that the cron for VIPs will be run on                                           |
 | TIMEZONE            | The timezone used when comparing to the current day                                      |
 
-3. Add the service account key file named as 'creds.json' to the project. It must have access to the Google Sheets API.
-
-4. Share a google sheet with the proper format to the service account
-
-5. Run the bot
+3. Run the bot
 ```
 python bot.py
 ```

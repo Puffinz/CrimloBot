@@ -1,117 +1,52 @@
 import os
 import datetime as dt
+import mysql.connector
 
 from dotenv import load_dotenv
-from googleapiclient.discovery import build
-from google.oauth2 import service_account
-from exceptions import GoogleAPIException, SheetException
-from httplib2 import ServerNotFoundError
-from json import JSONDecodeError
 from util import getCurrentDate
 
 load_dotenv()
 
-VIP_SHEET_ID = os.getenv('VIP_SHEET_ID')
-VIP_USER_CLOSE_TO_EXPIRY = os.getenv('VIP_USER_CLOSE_TO_EXPIRY_DAYS')
+cnx = mysql.connector.connect(
+  user = os.getenv('DB_USER'),
+  password = os.getenv('DB_PASSWORD'),
+  host = os.getenv('DB_HOST'),
+  database = os.getenv('DB_NAME')
+)
 
-# Build a google sheets api service with proper credentials
-def buildService():
-  scopes = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/spreadsheets"]
+cursor = cnx.cursor()
 
-  try:
-    credentials = service_account.Credentials.from_service_account_file('creds.json', scopes=scopes)
-  except ServerNotFoundError:
-    raise GoogleAPIException
-
-  return build('sheets', 'v4', credentials=credentials)
-
-# Return values from given sheet at the specified range
-def readSheet(sheetId: str, range: str):
-  sheet = buildService().spreadsheets()
-
-  try:
-    result = sheet.values().get(spreadsheetId=sheetId, range=range, valueRenderOption='UNFORMATTED_VALUE').execute()
-  except JSONDecodeError:
-    raise GoogleAPIException
-
-  return result.get('values', [])
-
-# Add given values to the given sheet in the specified range
-def appendToSheet(sheetId: str, range: str, values):
-  body = {
-    'range': range,
-    'values': [values]
-  }
-
-  sheet = buildService().spreadsheets()
-
-  return sheet.values().append(spreadsheetId=sheetId, range=range, valueInputOption='USER_ENTERED', insertDataOption='OVERWRITE', body=body).execute()
-
-# Update given range in sheet with values
-def updateSheet(sheetId: str, range: str, values):
-  body = {
-    'range': range,
-    'values': [values]
-  }
-
-  sheet = buildService().spreadsheets()
-
-  return sheet.values().update(spreadsheetId=sheetId, range=range, valueInputOption='USER_ENTERED', body=body).execute()
-
-# Get pageId for given pageName
-def getPageId(sheetId: str, pageName: str):
-  sheet = buildService().spreadsheets()
-
-  pageId = None
-  spreadsheets = sheet.get(spreadsheetId=sheetId).execute()
-  for page in spreadsheets['sheets']:
-    if page['properties']['title'] == pageName:
-      pageId = page['properties']['sheetId']
-
-  return pageId
-
-# Delete a single row from a sheet on a given page
-def deleteRow(sheetId: str, pageId: int, rowIndex: int):
-  sheet = buildService().spreadsheets()
-
-  body = {
-    'requests': {
-      'deleteDimension': {
-        'range': {
-          'sheetId': pageId,
-          'dimension': 'ROWS',
-          'startIndex': rowIndex - 1,
-          'endIndex': rowIndex
-        }
-      }
-    }
-  }
-
-  sheet.batchUpdate(spreadsheetId=sheetId, body=body).execute()
-
-# Get data from the vip spreadsheet
-def getVipData(id: str):
-  values = readSheet(VIP_SHEET_ID, 'A5:E')
+# Get data for a specific user by discord id
+def getVipData(discordId: str):
+  query = 'SELECT name, home_world, vip_expiration, vip_balance WHERE discord_id = %s AND vip_tier = 1'
+  values = cnx.execute(query, (discordId))
 
   if not values:
     return
 
-  for row in values:
-    if len(row) > 1 and str(row[1]) == str(id):
-      return rowToVipMap(row, True)
+  return values[0]
 
-  return None
-
-# Add given number of months to vip in spreadsheet
-def addVipMonths(name, id, months: int):
+# Add given number of vip months to a user
+def addVipMonths(name, discordId, months: int):
   days = 30 * months
-  values = readSheet(VIP_SHEET_ID, 'A5:E')
 
-  # See if the name is already in the sheet
+  # See if the user's discord id already exists in the table
+  idQuery = 'SELECT id WHERE discord_id = %s and vip_tier = 1'
+  idResult = cnx.execute(valuesFromIdQuery, (discordId))
+
+  # If the discord id exists, update that row
+  if idResult:
+    updateQuery = ()
+
+  # If the discord id doesn't exist, check for the user's name
+
+  # If the user's name exists, we need to ask which server - either way we need the server
+
+  # See if the id or name is already in the sheet
   userIndex = None
   data = None
-  if values:
-    for index, row in enumerate(values, start=0):
+  if valuesFromId:
+    for index, row in enumerate(values, start = 0):
       if len(row) > 1 and str(row[1]) == str(id):
         userIndex = index
         data = rowToVipMap(row)
