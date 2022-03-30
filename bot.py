@@ -6,8 +6,8 @@ from discord.ext import commands
 from discord.utils import get
 from discord.errors import NotFound
 from dotenv import load_dotenv
-from sheets import getVipData, addVipMonths, updateVipName, removeExpiredVips
 from util import getCurrentDate
+from sheets import getVipData, addVipMonths, getExpiredVips
 
 load_dotenv()
 
@@ -68,12 +68,9 @@ async def help(ctx):
 async def vip(ctx):
   user = ctx.message.author
 
-  try:
-    data = getVipData(user.id)
+  data = getVipData(user.id)
 
-    await sendVipInfo(ctx, user, data)
-  except (SheetException, GoogleAPIException) as e:
-    await reportError(e.message)
+  await sendVipInfo(ctx, user, data)
 
 @vip.error
 async def vip_error(ctx, error):
@@ -83,12 +80,9 @@ async def vip_error(ctx, error):
 @bot.command(name='getVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
 async def getVip(ctx, taggedUser: discord.User):
-  try:
-    data = getVipData(taggedUser.id)
+  data = getVipData(taggedUser.id)
 
-    await sendVipInfo(ctx, taggedUser, data)
-  except (SheetException, GoogleAPIException) as e:
-    await reportError(e.message)
+  await sendVipInfo(ctx, taggedUser, data)
 
 @getVip.error
 async def getVip_error(ctx, error):
@@ -101,45 +95,18 @@ async def addVip(ctx, taggedUser: discord.Member, months = 1):
   name = taggedUser.display_name
   id = taggedUser.id
 
-  try:
-    addVipMonths(name, id, months)
+  addVipMonths(name, id, months)
 
-    # Add VIP role
-    role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
-    await taggedUser.add_roles(role)
+  # Add VIP role
+  role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
+  await taggedUser.add_roles(role)
 
-    data = getVipData(id)
+  data = getVipData(id)
 
-    await sendVipInfo(ctx, taggedUser, data)
-  except (SheetException, GoogleAPIException) as e:
-    await reportError(e.message)
+  await sendVipInfo(ctx, taggedUser, data)
 
 @addVip.error
 async def addVip_error(ctx, error):
-  await handleErrors(ctx, error)
-
-# !renameVip
-@bot.command(name='renameVip')
-@commands.has_role(BOT_MANAGER_ROLE_ID)
-async def renameVip(ctx, taggedUser: discord.Member):
-  id = taggedUser.id
-  name = taggedUser.display_name
-
-  try:
-    updateVipName(id, name)
-
-    data = getVipData(id)
-
-    await sendVipInfo(ctx, taggedUser, data)
-  except (SheetException, GoogleAPIException) as e:
-    await reportError(e.message)
-
-async def reportError(errorMessage: str):
-  logChannel = bot.get_channel(CRON_CHANNEL_ID)
-  await logChannel.send(errorMessage)
-
-@renameVip.error
-async def renameVip_error(ctx, error):
   await handleErrors(ctx, error)
 
 # !cleanVips
@@ -163,10 +130,7 @@ async def cleanVips(manual = False):
   expiredUsers = None
   error = False
 
-  try:
-    expiredUsers = removeExpiredVips()
-  except (SheetException, GoogleAPIException) as e:
-    error = e.message
+  expiredUsers = getExpiredVips()
 
   removedUsers = []
   notFoundUsers = []
