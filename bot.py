@@ -150,40 +150,39 @@ async def vipCron():
 
 # Vip Cleaning
 async def cleanVips(manual = False):
-
   guild = await bot.fetch_guild(SERVER_ID)
-
-  # Clean up expired Vips
-
-  expiredUsers = None
-  error = False
-
-  expiredUsers = getExpiredVips()
+  role = get(guild.roles, id=VIP_ROLE_ID)
 
   removedUsers = []
   notFoundUsers = []
 
-  if expiredUsers:
-    for expiredUser in expiredUsers:
-      try:
-        user = await guild.fetch_member(expiredUser['discordId'])
-        if user:
-          role = get(guild.roles, id=VIP_ROLE_ID)
-          await user.remove_roles(role)
+  # Loop through all members of the discord
+  async for member in guild.fetch_members(limit=None):
+    # Check if the user has the vip role
+    if role in member.roles:
+      # Get data from the api
+      data = existingUserRequest(member.id)
+
+      if data:
+        # See if the user is expired
+        if data['daysRemaining'] <= 0:
+          await member.remove_roles(role)
 
           # DM the user
           embed=discord.Embed(title='VIP EXPIRED', description='Your VIP Status at The Crimson Lotus has expired. Please come to the venue on our next opening to resubscribe so that you can keep all of your perks. ', color=CRIMLO_COLOR)
           embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/629857962239852593/940494143728259072/LotusLogoFilled.png')
-          embed.add_field(name='Name', value=expiredUser['name'], inline=False)
-          embed.add_field(name='Start Date', value=expiredUser['startDate'], inline=False)
-          embed.add_field(name='End Date', value=expiredUser['endDate'], inline=False)
+          embed.add_field(name='Name', value=data['name'], inline=False)
+          embed.add_field(name='World', value=data['world'], inline=False)
+          embed.add_field(name='Days Remaning', value='0', inline=False)
           embed.set_footer(text='Thank you for being one of our valued patrons. If you have any questions please contact Patchwerk#0001 on Discord.')
 
-          await user.send(embed=embed)
+          await member.send(embed=embed)
 
-          removedUsers.append(user.display_name)
-      except (NotFound):
-        notFoundUsers.append(expiredUser['name'])
+          removedUsers.append(member.display_name)
+      else:
+        # User is not found by the api, add the the report
+        notFoundUsers.append(member.display_name)
+
 
   # Log the report to the specified channel
 
@@ -198,14 +197,10 @@ async def cleanVips(manual = False):
   embed.add_field(name='Date', value=getCurrentDate().strftime('%m/%d/%Y'))
 
   if removedUsers:
-    embed.add_field(name='Removed and DM\'d the Following Users', value='\n'.join(removedUsers), inline=False)
+    embed.add_field(name='I have removed the vip role from and sent a direct message to the following users:', value='\n'.join(removedUsers), inline=False)
 
   if notFoundUsers:
-    embed.add_field(name='Failed to change the role and DM the following expired users, which could not be found', value='\n'.join(notFoundUsers), inline=False)
-
-  if error:
-    embed.description = 'There were issues running the scheduled job, review the posted errors and the spreadsheet, then run !cleanVips manually'
-    embed.add_field(name='Error', value=error, inline=False)
+    embed.add_field(name='These users have the vip role but were not found in system - please review manually:', value='\n'.join(notFoundUsers), inline=False)
 
   await logChannel.send(embed=embed)
 

@@ -38,7 +38,10 @@ def userRequest(params):
   if data.get('error'):
     return
 
-  daysRemaining = max((datetime.strptime(data['vip_expiration'], '%Y-%m-%d %H:%M:%S').date() - getCurrentDate()).days, 0)
+  if data.get('vip_expiration'):
+    daysRemaining = max((datetime.strptime(data['vip_expiration'], '%Y-%m-%d %H:%M:%S').date() - getCurrentDate()).days, 0)
+  else:
+    daysRemaining = 0
 
   return {
     'name': data['name'],
