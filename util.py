@@ -1,12 +1,21 @@
 import os
-import pytz
 
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 
 load_dotenv()
 
-TIMEZONE = os.getenv('TIMEZONE') or 'Etc/UTC'
-
 def getCurrentDate():
-  return datetime.now(pytz.timezone(TIMEZONE)).date()
+  return datetime.now(timezone.utc).date()
+
+def getWorlds():
+  return [
+    'Adamantoise',
+    'Cactuar',
+    'Faerie',
+    'Gilgamesh',
+    'Jenova',
+    'Midgardsormr',
+    'Sargatanas',
+    'Siren'
+  ]

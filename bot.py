@@ -6,8 +6,8 @@ from discord.ext import commands
 from discord.utils import get
 from discord.errors import NotFound
 from dotenv import load_dotenv
-from util import getCurrentDate
-from api import getVipData, addVipMonths, getExpiredVips
+from util import getCurrentDate, getWorlds
+from api import existingUserRequest, newUserRequest, getExpiredVips
 
 load_dotenv()
 
@@ -29,7 +29,7 @@ bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
 
 async def handleErrors(ctx, error):
   if isinstance(error, commands.MissingRequiredArgument):
-    await ctx.send('You must include a tagged user.', delete_after=5)
+    await ctx.send('Missing required parameter. Use the help command for more info.', delete_after=5)
   elif isinstance(error, commands.MissingPermissions):
     return
   else:
@@ -56,9 +56,9 @@ async def help(ctx):
 
   embed.add_field(name=BOT_PREFIX + 'vip', value='Return vip information for your user', inline=False)
   embed.add_field(name=BOT_PREFIX + 'getVip @<user>', value='Return vip information of the specified user', inline=False)
-  embed.add_field(name=BOT_PREFIX + 'addVip @<user>', value='Grant 1 month of vip to the specified user', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'newVip @<user> <world> <months (optional)>', value='Grant 1 month of vip to the specified user', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'addVip @<user> <months (optional)>', value='Grant month(s) of vip to the specified user', inline=False)
   embed.add_field(name=BOT_PREFIX + 'cleanVips', value='Manually run the scheduled cleanup task', inline=False)
-  embed.add_field(name=BOT_PREFIX + 'renameVip @<user>', value='Update the name of an existing vip - use this if a vip has changed their discord name', inline=False)
 
   await ctx.send(embed=embed)
 
@@ -67,7 +67,7 @@ async def help(ctx):
 async def vip(ctx):
   user = ctx.message.author
 
-  data = getVipData(user.id)
+  data = existingUserRequest(user.id)
 
   await sendVipInfo(ctx, user, data)
 
@@ -79,7 +79,7 @@ async def vip_error(ctx, error):
 @bot.command(name='getVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
 async def getVip(ctx, taggedUser: discord.User):
-  data = getVipData(taggedUser.id)
+  data = existingUserRequest(taggedUser.id)
 
   await sendVipInfo(ctx, taggedUser, data)
 
@@ -87,20 +87,49 @@ async def getVip(ctx, taggedUser: discord.User):
 async def getVip_error(ctx, error):
   await handleErrors(ctx, error)
 
+# !newVip
+@bot.command(name='newVip')
+@commands.has_role(BOT_MANAGER_ROLE_ID)
+async def newVip(ctx, taggedUser: discord.Member, world: str, months = 1):
+  id = taggedUser.id
+
+  oldData = existingUserRequest(id)
+
+  if oldData:
+    await ctx.send('User already exists in the system.')
+
+  else:
+    name = taggedUser.display_name
+
+    world = world.title() #Capitalize properly
+    if world in getWorlds():
+      newData = newUserRequest(id, name, world, months)
+
+      if newData:
+        # Add VIP role
+        role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
+        await taggedUser.add_roles(role)
+
+      await sendVipInfo(ctx, taggedUser, newData)
+    else:
+      await ctx.send('The world entered does not exist on the Aether data center.')
+
+@newVip.error
+async def newVip_error(ctx, error):
+  await handleErrors(ctx, error)
+
 # !addVip
 @bot.command(name='addVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
 async def addVip(ctx, taggedUser: discord.Member, months = 1):
-  name = taggedUser.display_name
   id = taggedUser.id
 
-  addVipMonths(name, id, months)
+  data = existingUserRequest(id, months)
 
-  # Add VIP role
-  role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
-  await taggedUser.add_roles(role)
-
-  data = getVipData(id)
+  if data:
+    # Add VIP role
+    role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
+    await taggedUser.add_roles(role)
 
   await sendVipInfo(ctx, taggedUser, data)
 

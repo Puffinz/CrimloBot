@@ -7,36 +7,44 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-API_KEY = os.getenv('API_KEY')
-API_HOST = os.getenv('API_HOST')
-
-# Get data for a specific user by discord id
-def getVipData(discordId: str):
+# Get a user or add vip time
+def existingUserRequest(discordId, months: int = 0):
   params = {
-    'key': API_KEY,
-    'discord_id': discordId
+    'discord_id': discordId,
+    'addmonth': months
   }
 
-  response = requests.get(url=API_HOST, params=params)
+  return userRequest(params)
+
+# Create a new vip user
+def newUserRequest(discordId, name, world, months: int = 0):
+  params = {
+    'set_discord_id': discordId,
+    'addmonth': months,
+    'name': name + '@' + world,
+    'create': '1'
+  }
+
+  print(params)
+
+  return userRequest(params)
+
+def userRequest(params):
+  params['key'] = os.getenv('API_KEY')
+
+  response = requests.get(url=os.getenv('API_HOST'), params=params)
   data = response.json()
 
   if data.get('error'):
     return
 
-  print(datetime.strptime(data.get('vip_expiration'), '%Y-%m-%d %H:%M:%S'))
-  print(getCurrentDate())
-
-  daysRemaining = max((datetime.strptime(data.get('vip_expiration'), '%Y-%m-%d %H:%M:%S').date() - getCurrentDate()).days, 0)
+  daysRemaining = max((datetime.strptime(data['vip_expiration'], '%Y-%m-%d %H:%M:%S').date() - getCurrentDate()).days, 0)
 
   return {
     'name': data['name'],
     'world': data['home_world'],
     'daysRemaining': daysRemaining
   }
-
-# Add given number of vip months to a user
-def addVipMonths(name, discordId, months: int):
-  days = 30 * months
 
 def getExpiredVips():
   return 0
