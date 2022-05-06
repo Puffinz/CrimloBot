@@ -56,7 +56,7 @@ async def help(ctx):
 
   embed.add_field(name=BOT_PREFIX + 'vip', value='Return vip information for your user', inline=False)
   embed.add_field(name=BOT_PREFIX + 'getVip @<user>', value='Return vip information of the specified user', inline=False)
-  embed.add_field(name=BOT_PREFIX + 'newVip @<user> <world> <months (optional)>', value='Grant 1 month of vip to the specified user', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'newVip @<user> <world> <months (optional)>', value='Add a new user to the system, and grant them month(s) of vip', inline=False)
   embed.add_field(name=BOT_PREFIX + 'addVip @<user> <months (optional)>', value='Grant month(s) of vip to the specified user', inline=False)
   embed.add_field(name=BOT_PREFIX + 'cleanVips', value='Manually run the scheduled cleanup task', inline=False)
 
