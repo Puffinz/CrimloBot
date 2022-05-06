@@ -18,6 +18,8 @@ pip install -r requirements.txt
 | CRON_CHANNEL_ID     | Channel where vip cron logs will output                                                  |
 | CRON_SCHEDULE       | Schedule that the cron for VIPs will be run on                                           |
 | TIMEZONE            | The timezone used when comparing to the current day                                      |
+| API_HOST            | URL of the api used to interact with the vip storage                                     |
+| API_KEY             | Authorization key for the api                                                            |
 
 3. Run the bot
 ```
