@@ -2,11 +2,11 @@ import os
 import pytz
 
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timezone
 
 load_dotenv()
 
 TIMEZONE = os.getenv('TIMEZONE') or 'Etc/UTC'
 
 def getCurrentDate():
-  return datetime.utcnow().replace(tzinfo=pytz.timezone(TIMEZONE)).date()
+  return datetime.now(pytz.timezone(TIMEZONE)).date()

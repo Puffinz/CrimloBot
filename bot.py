@@ -7,7 +7,7 @@ from discord.utils import get
 from discord.errors import NotFound
 from dotenv import load_dotenv
 from util import getCurrentDate
-from sheets import getVipData, addVipMonths, getExpiredVips
+from api import getVipData, addVipMonths, getExpiredVips
 
 load_dotenv()
 
@@ -40,9 +40,8 @@ async def sendVipInfo(ctx, user: discord.Member, data):
     embed = discord.Embed(title='Crimson Lotus VIP Status', color=CRIMLO_COLOR)
     embed.set_thumbnail(url=user.avatar_url)
     embed.add_field(name='Name', value=data['name'], inline=False)
-    embed.add_field(name='Start Date', value=data['startDate'], inline=False)
-    embed.add_field(name='End Date', value=data['endDate'], inline=False)
-    embed.add_field(name='Days Remaining ', value=data['remainingDays'], inline=False)
+    embed.add_field(name='World', value=data['world'], inline=False)
+    embed.add_field(name='Days Remaining ', value=data['daysRemaining'], inline=False)
 
     await ctx.send(embed=embed)
   else:
