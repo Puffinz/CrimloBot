@@ -153,8 +153,9 @@ async def cleanVips(manual = False):
   guild = await bot.fetch_guild(SERVER_ID)
   role = get(guild.roles, id=VIP_ROLE_ID)
 
-  removedUsers = []
-  notFoundUsers = []
+  usersRoleRemoved = []
+  usersRoleAdded = []
+  usersNotFound = []
 
   existingVipIds = getAllVips()
 
@@ -162,6 +163,7 @@ async def cleanVips(manual = False):
   async for member in guild.fetch_members(limit=None):
     # Check if the user has the vip role
     if role in member.roles:
+      # Check if the user is no longer a vip
       if member.id not in existingVipIds:
         # Get data from the api
         data = existingUserRequest(member.id)
@@ -179,10 +181,15 @@ async def cleanVips(manual = False):
 
           await member.send(embed=embed)
 
-          removedUsers.append(member.display_name)
+          usersRoleRemoved.append(member.display_name)
         else:
           # User is not found by the api, add the the report
-          notFoundUsers.append(member.display_name)
+          usersNotFound.append(member.display_name)
+    # Check if they need to have the role added
+    elif member.id in existingVipIds:
+      await member.add_roles(role)
+
+      usersRoleAdded.append(member.display_name)
 
 
   # Log the report to the specified channel
@@ -190,18 +197,21 @@ async def cleanVips(manual = False):
   logChannel = bot.get_channel(CRON_CHANNEL_ID)
 
   if manual:
-    title = 'Crimlo Bot Manual Report'
+    title = 'Crimlo Bot Manual Cleanup Report'
   else:
-    title = 'Crimlo Bot Scheduled Report'
+    title = 'Crimlo Bot Scheduled Cleanup Report'
 
   embed = discord.Embed(title=title, color=CRIMLO_COLOR)
   embed.add_field(name='Date', value=getCurrentDate().strftime('%m/%d/%Y'))
 
-  if removedUsers:
-    embed.add_field(name='I have removed the vip role from and sent a direct message to the following users:', value='\n'.join(removedUsers), inline=False)
+  if usersRoleRemoved:
+    embed.add_field(name='Removed the vip role from and sent a direct message to the following users:', value='\n'.join(usersRoleRemoved), inline=False)
 
-  if notFoundUsers:
-    embed.add_field(name='These users have the vip role but were not found in system - please review manually:', value='\n'.join(notFoundUsers), inline=False)
+  if usersRoleAdded:
+    embed.add_field(name='Assigned the vip role to the following users which were missing it:', value='\n'.join(usersRoleAdded), inline=False)
+
+  if usersNotFound:
+    embed.add_field(name='These users have the vip role but were not found in system - please review manually:', value='\n'.join(usersNotFound), inline=False)
 
   await logChannel.send(embed=embed)
 
