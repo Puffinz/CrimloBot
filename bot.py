@@ -58,7 +58,7 @@ async def help(ctx):
   embed.add_field(name=BOT_PREFIX + 'getVip @<user>', value='Return vip information of the specified user', inline=False)
   embed.add_field(name=BOT_PREFIX + 'newVip @<user> <world> <months (optional)>', value='Add a new user to the system, and grant them month(s) of vip', inline=False)
   embed.add_field(name=BOT_PREFIX + 'addVip @<user> <months (optional)>', value='Grant month(s) of vip to the specified user', inline=False)
-  embed.add_field(name=BOT_PREFIX + 'cleanVips', value='Manually run the scheduled cleanup task', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'cleanVips <dm>', value='Manually run the scheduled cleanup task. Use \'false\' as a parameter to not dm users', inline=False)
 
   await ctx.send(embed=embed)
 
@@ -140,8 +140,8 @@ async def addVip_error(ctx, error):
 # !cleanVips
 @bot.command(name='cleanVips')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
-async def cleanVipsCommand(ctx):
-  await cleanVips(True)
+async def cleanVipsCommand(ctx, dm: bool = True):
+  await cleanVips(True, dm)
 
 # Cron scheduled task
 @aiocron.crontab(CRON_SCHEDULE)
@@ -149,7 +149,7 @@ async def vipCron():
   await cleanVips()
 
 # Vip Cleaning
-async def cleanVips(manual = False):
+async def cleanVips(manual = False, dm = True):
   guild = await bot.fetch_guild(SERVER_ID)
   role = get(guild.roles, id=VIP_ROLE_ID)
 
@@ -171,15 +171,16 @@ async def cleanVips(manual = False):
         if data:
           await member.remove_roles(role)
 
-          # DM the user
-          embed=discord.Embed(title='VIP EXPIRED', description='Your VIP Status at The Crimson Lotus has expired. Please come to the venue on our next opening to resubscribe so that you can keep all of your perks. ', color=CRIMLO_COLOR)
-          embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/629857962239852593/940494143728259072/LotusLogoFilled.png')
-          embed.add_field(name='Name', value=data['name'], inline=False)
-          embed.add_field(name='World', value=data['world'], inline=False)
-          embed.add_field(name='Days Remaning', value='0', inline=False)
-          embed.set_footer(text='Thank you for being one of our valued patrons. If you have any questions please contact Patchwerk#0001 on Discord.')
+          if dm:
+            # DM the user
+            embed=discord.Embed(title='VIP EXPIRED', description='Your VIP Status at The Crimson Lotus has expired. Please come to the venue on our next opening to resubscribe so that you can keep all of your perks. ', color=CRIMLO_COLOR)
+            embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/629857962239852593/940494143728259072/LotusLogoFilled.png')
+            embed.add_field(name='Name', value=data['name'], inline=False)
+            embed.add_field(name='World', value=data['world'], inline=False)
+            embed.add_field(name='Days Remaning', value='0', inline=False)
+            embed.set_footer(text='Thank you for being one of our valued patrons. If you have any questions please contact Patchwerk#0001 on Discord.')
 
-          await member.send(embed=embed)
+            await member.send(embed=embed)
 
           usersRoleRemoved.append(member.display_name)
         else:
@@ -205,7 +206,11 @@ async def cleanVips(manual = False):
   embed.add_field(name='Date', value=getCurrentDate().strftime('%m/%d/%Y'))
 
   if usersRoleRemoved:
-    embed.add_field(name='Removed the vip role from and sent a direct message to the following users:', value='\n'.join(usersRoleRemoved), inline=False)
+    if dm:
+      removeMessage = 'Removed the vip role from and sent a direct message to the following users:'
+    else:
+      removeMessage = 'Removed the vip role from the following users (Direct message disabled):'
+    embed.add_field(name=removeMessage, value='\n'.join(usersRoleRemoved), inline=False)
 
   if usersRoleAdded:
     embed.add_field(name='Assigned the vip role to the following users which were missing it:', value='\n'.join(usersRoleAdded), inline=False)
