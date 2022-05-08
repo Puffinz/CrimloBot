@@ -7,7 +7,7 @@ from discord.utils import get
 from discord.errors import NotFound
 from dotenv import load_dotenv
 from util import getCurrentDate, getWorlds
-from api import existingUserRequest, newUserRequest, getExpiredVips
+from api import existingUserRequest, newUserRequest, getAllVips
 
 load_dotenv()
 
@@ -156,16 +156,17 @@ async def cleanVips(manual = False):
   removedUsers = []
   notFoundUsers = []
 
+  existingVipIds = getAllVips()
+
   # Loop through all members of the discord
   async for member in guild.fetch_members(limit=None):
     # Check if the user has the vip role
     if role in member.roles:
-      # Get data from the api
-      data = existingUserRequest(member.id)
+      if member.id not in existingVipIds:
+        # Get data from the api
+        data = existingUserRequest(member.id)
 
-      if data:
-        # See if the user is expired
-        if data['daysRemaining'] <= 0:
+        if data:
           await member.remove_roles(role)
 
           # DM the user
@@ -179,9 +180,9 @@ async def cleanVips(manual = False):
           await member.send(embed=embed)
 
           removedUsers.append(member.display_name)
-      else:
-        # User is not found by the api, add the the report
-        notFoundUsers.append(member.display_name)
+        else:
+          # User is not found by the api, add the the report
+          notFoundUsers.append(member.display_name)
 
 
   # Log the report to the specified channel

@@ -25,15 +25,11 @@ def newUserRequest(discordId, name, world, months: int = 0):
     'create': '1'
   }
 
-  print(params)
-
   return userRequest(params)
 
+# Generic request that returns data for a single user
 def userRequest(params):
-  params['key'] = os.getenv('API_KEY')
-
-  response = requests.get(url=os.getenv('API_HOST'), params=params)
-  data = response.json()
+  data = apiRequest(params)
 
   if data.get('error'):
     return
@@ -49,5 +45,28 @@ def userRequest(params):
     'daysRemaining': daysRemaining
   }
 
-def getExpiredVips():
-  return 0
+# Get a list of all discord ids that currently have vip
+def getAllVips():
+  params = {
+    'get_vips': 1
+  }
+
+  data = apiRequest(params)
+
+  if data.get('error'):
+    return
+
+  vipList = []
+  for user in data['vip_users']:
+    vipList.append(int(user['discord_id']))
+
+  return vipList
+
+# Generic api request
+def apiRequest(params):
+  params['key'] = os.getenv('API_KEY')
+
+  response = requests.get(url=os.getenv('API_HOST'), params=params)
+  data = response.json()
+
+  return data
