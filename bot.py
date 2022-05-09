@@ -56,8 +56,7 @@ async def help(ctx):
 
   embed.add_field(name=BOT_PREFIX + 'vip', value='Return vip information for your user', inline=False)
   embed.add_field(name=BOT_PREFIX + 'getVip @<user>', value='Return vip information of the specified user', inline=False)
-  embed.add_field(name=BOT_PREFIX + 'newVip @<user> <world> <months (optional)>', value='Add a new user to the system, and grant them month(s) of vip', inline=False)
-  embed.add_field(name=BOT_PREFIX + 'addVip @<user> <months (optional)>', value='Grant month(s) of vip to the specified user', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'addVip @<user> <world> <months (optional)>', value='Grant month(s) of vip to the specified user', inline=False)
   embed.add_field(name=BOT_PREFIX + 'cleanVips <dm>', value='Manually run the scheduled cleanup task. Use \'false\' as a parameter to not dm users', inline=False)
 
   await ctx.send(embed=embed)
@@ -87,51 +86,32 @@ async def getVip(ctx, taggedUser: discord.User):
 async def getVip_error(ctx, error):
   await handleErrors(ctx, error)
 
-# !newVip
-@bot.command(name='newVip')
-@commands.has_role(BOT_MANAGER_ROLE_ID)
-async def newVip(ctx, taggedUser: discord.Member, world: str, months = 1):
-  id = taggedUser.id
-
-  oldData = existingUserRequest(id)
-
-  if oldData:
-    await ctx.send('User already exists in the system.')
-
-  else:
-    name = taggedUser.display_name
-
-    world = world.title() #Capitalize properly
-    if world in getWorlds():
-      newData = newUserRequest(id, name, world, months)
-
-      if newData:
-        # Add VIP role
-        role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
-        await taggedUser.add_roles(role)
-
-      await sendVipInfo(ctx, taggedUser, newData)
-    else:
-      await ctx.send('The world entered does not exist on the Aether data center.')
-
-@newVip.error
-async def newVip_error(ctx, error):
-  await handleErrors(ctx, error)
-
 # !addVip
 @bot.command(name='addVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
-async def addVip(ctx, taggedUser: discord.Member, months = 1):
-  id = taggedUser.id
+async def addVip(ctx, taggedUser: discord.Member, world: str, months = 1):
+  world = world.title() #Capitalize properly
 
-  data = existingUserRequest(id, months)
+  if world in getWorlds():
+    id = taggedUser.id
+    name = taggedUser.display_name
+    oldData = existingUserRequest(id)
 
-  if data:
-    # Add VIP role
-    role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
-    await taggedUser.add_roles(role)
+    if oldData:
+      newData = existingUserRequest(id, months)
+    else:
+      newData = newUserRequest(id, name, world, months)
 
-  await sendVipInfo(ctx, taggedUser, data)
+    if newData:
+      # Add VIP role
+      role = get(ctx.message.author.guild.roles, id=VIP_ROLE_ID)
+      await taggedUser.add_roles(role)
+
+      await sendVipInfo(ctx, taggedUser, newData)
+    else:
+      await ctx.send('Error saving vip data.')
+  else:
+    await ctx.send('The world entered does not exist on the Aether data center.')
 
 @addVip.error
 async def addVip_error(ctx, error):
