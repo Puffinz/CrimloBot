@@ -56,7 +56,7 @@ async def help(ctx):
 
   embed.add_field(name=BOT_PREFIX + 'vip', value='Return vip information for your user', inline=False)
   embed.add_field(name=BOT_PREFIX + 'getVip @<user>', value='Return vip information of the specified user', inline=False)
-  embed.add_field(name=BOT_PREFIX + 'addVip @<user> <world> <months (optional)>', value='Grant month(s) of vip to the specified user', inline=False)
+  embed.add_field(name=BOT_PREFIX + 'addVip @<user> <world> <months (optional)>', value='Grant month(s) of vip to the specified user. Use \'lifetime\' for infinite vip', inline=False)
   embed.add_field(name=BOT_PREFIX + 'cleanVips <dm>', value='Manually run the scheduled cleanup task. Use \'false\' as a parameter to not dm users', inline=False)
 
   await ctx.send(embed=embed)
@@ -89,7 +89,7 @@ async def getVip_error(ctx, error):
 # !addVip
 @bot.command(name='addVip')
 @commands.has_role(BOT_MANAGER_ROLE_ID)
-async def addVip(ctx, taggedUser: discord.Member, world: str, months = 1):
+async def addVip(ctx, taggedUser: discord.Member, world: str, months = '1'):
   world = world.title() #Capitalize properly
 
   if world in getWorlds():

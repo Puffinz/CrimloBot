@@ -7,23 +7,36 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+LIFETIME_STRING = 'lifetime'
+LIFETIME_DATE_INPUT = '9999-01-01'
+LIFETIME_DATE_OUTPUT = '9998-12-31 17:00:00'
+
 # Get a user or add vip time
-def existingUserRequest(discordId, months: int = 0):
+def existingUserRequest(discordId, months: str = '0'):
   params = {
-    'discord_id': discordId,
-    'addmonth': months
+    'discord_id': discordId
   }
+
+  if (months.strip().lower() == LIFETIME_STRING):
+    params['setvipdate'] = LIFETIME_DATE_INPUT
+  else:
+    params['addmonth'] = months
 
   return userRequest(params)
 
 # Create a new vip user
-def newUserRequest(discordId, name, world, months: int = 0):
+def newUserRequest(discordId, name, world, months: str = '0'):
   params = {
     'set_discord_id': discordId,
     'addmonth': months,
     'name': name + '@' + world,
     'create': '1'
   }
+
+  if (months.strip().lower() == LIFETIME_STRING):
+    params['setvipdate'] = LIFETIME_DATE_INPUT
+  else:
+    params['addmonth'] = months
 
   return userRequest(params)
 
@@ -34,8 +47,11 @@ def userRequest(params):
   if data.get('error'):
     return
 
-  if data.get('vip_expiration'):
-    daysRemaining = max((datetime.strptime(data['vip_expiration'], '%Y-%m-%d %H:%M:%S').date() - getCurrentDate()).days, 0)
+  expiration = data.get('vip_expiration')
+  if expiration == LIFETIME_DATE_OUTPUT:
+    daysRemaining = 'Lifetime'
+  elif expiration:
+    daysRemaining = max((datetime.strptime(expiration, '%Y-%m-%d %H:%M:%S').date() - getCurrentDate()).days, 0)
   else:
     daysRemaining = 0
 
