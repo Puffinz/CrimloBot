@@ -17,5 +17,21 @@ def getWorlds():
     'Jenova',
     'Midgardsormr',
     'Sargatanas',
-    'Siren'
+    'Siren',
+    'Balmung',
+    'Brynhildr',
+    'Coeurl',
+    'Diabolos',
+    'Goblin',
+    'Malboro',
+    'Mateus',
+    'Zalera',
+    'Behemoth',
+    'Excalibur',
+    'Exodus',
+    'Famfrit',
+    'Hyperion',
+    'Lamia',
+    'Leviathan',
+    'Ultros'
   ]

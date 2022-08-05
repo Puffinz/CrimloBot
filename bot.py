@@ -111,7 +111,7 @@ async def addVip(ctx, taggedUser: discord.Member, world: str, months = '1'):
     else:
       await ctx.send('Error saving vip data.')
   else:
-    await ctx.send('The world entered does not exist on the Aether data center.')
+    await ctx.send('That world does not exist on the North American data center.')
 
 @addVip.error
 async def addVip_error(ctx, error):
