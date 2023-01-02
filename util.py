@@ -31,5 +31,9 @@ def getWorlds():
     'Hyperion',
     'Lamia',
     'Leviathan',
-    'Ultros'
+    'Ultros',
+    'Halicarnassus',
+    'Maduin',
+    'Marilith',
+    'Seraph'
   ]
